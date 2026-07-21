@@ -681,12 +681,8 @@
       fill: var(--accent);
       cursor: pointer;
     }
-    /* Hover: each <path> is one country (all disjoint territories live
-       inside the same `d` attribute as M..Z subpaths), so :hover applies
-       to the whole element. Fill-opacity stays at its data-encoded value
-       — that's the signal (brighter = more visitors), and we don't want
-       to flatten it on hover. Just outline the country in --accent-hover
-       so the grouping is unmistakable. */
+    /* Hover outlines the country without flattening the fill-opacity
+       encoding (brighter = more visitors). */
     .world-map path[data-has="1"]:hover,
     .world-map path.map-selected {
       stroke: var(--accent-hover);
@@ -901,11 +897,8 @@
           break;
         case 'custom':
           if (customStart && customEnd) {
-            // Interpret the date-input strings in the user's local timezone so
-            // "today" in the picker matches "today" on the dashboard. Using
-            // 'T00:00:00' (no Z) anchors to local time; the toISOString() call
-            // converts to UTC for the API. The presets do the same — both
-            // boundaries are local-hour aligned.
+            // 'T00:00:00' (no Z) anchors to local time so "today" in the
+            // picker matches "today" on the dashboard.
             const s = new Date(customStart + 'T00:00:00');
             const e = new Date(customEnd + 'T23:00:00');
             return {
@@ -940,12 +933,9 @@
       return 'month';
     }
 
-    // GoatCounter's /stats/hits payload is pre-aggregated in the SITE's
-    // timezone: `day` is a calendar date string in site-local time, and
-    // `hourly[i]` is the count for hour `i` of that local day. Routing those
-    // through `new Date()` would treat them as UTC and shift everything by
-    // the browser's offset — for an IST site viewed in IST, that's a 5:30 hr
-    // shift on every label. So we parse the components directly instead.
+    // GoatCounter's hits payload uses site-local time. Routing through
+    // `new Date()` would treat it as UTC and shift labels, so we parse
+    // date components directly.
     function formatDateLabel(iso, group) {
       if (group === 'hour') {
         const m = iso.match(/T(\d{2})/);
@@ -963,9 +953,7 @@
       return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
     }
 
-    // Country name → flag emoji (best-effort). GoatCounter returns names
-    // ("India", "United States"), not ISO codes — keys reflect that.
-    // Falls back to 🌐 for unmapped names.
+    // Country name → flag emoji. Falls back to 🌐 for unmapped names.
     const COUNTRY_FLAGS = {
       'India':'🇮🇳','United States':'🇺🇸','United Kingdom':'🇬🇧','Germany':'🇩🇪','France':'🇫🇷','Japan':'🇯🇵',
       'Canada':'🇨🇦','Australia':'🇦🇺','Brazil':'🇧🇷','China':'🇨🇳','Russia':'🇷🇺','Spain':'🇪🇸','Italy':'🇮🇹',
@@ -1015,11 +1003,8 @@
       'Vatican':'VA','Holy See':'VA','Vatican City':'VA',
       'Kosovo':'XK',
     };
-    // Resolve a GoatCounter country name to an ISO alpha-2 code. Variants
-    // table above wins; otherwise we fall back to the canonical ISO names
-    // list shipped with assets/world-map.js (covers the simple cases like
-    // "India", "Japan", "United Arab Emirates"). Returns null if neither
-    // matches — caller decides what to do.
+    // Resolve a country name to ISO alpha-2. Tries the hand-curated table
+    // first, then the canonical list from assets/world-map.js.
     function countryNameToCode(name) {
       if (!name) return null;
       const trimmed = name.trim();
@@ -1030,17 +1015,11 @@
     }
 
     // ============================================================
-    // DEMO MODE — sample data for the "Try Demo" button on the connect screen.
-    // Static weights (relative proportions) are scaled to a per-range visitor
-    // total inside buildDemoData(). The shape of the output exactly matches
-    // the GoatCounter API responses the dashboard already consumes — same
-    // field names, same nesting — so it's a drop-in replacement for the
-    // fetched payloads. Generated only on demand (when the user clicks
-    // "Try Demo" or switches the date range in demo mode).
+    // DEMO MODE: sample data for the "Try Demo" button.
+    // Output shape matches GoatCounter API responses exactly.
     // ============================================================
 
-    // Top pages with relative weights. Used to distribute pageviews. Counts
-    // in the spec are advisory; the generator scales these proportionally.
+    // Top pages with relative weights, scaled proportionally.
     const DEMO_PATHS = [
       { path: '/', title: 'Home', weight: 4231 },
       { path: '/blog/building-distributed-systems-at-scale', title: 'Building Distributed Systems at Scale', weight: 3847 },
@@ -1296,7 +1275,7 @@
         // Gradual upward trend: newer days lift slightly. ~30% over 30 days.
         const dayIdx = numDays - 1 - i;
         w *= 1 + dayIdx * (0.30 / Math.max(1, numDays - 1));
-        // Viral spikes (architect: keep the spikes — they're the story)
+        // Viral spikes
         const vi = viralIndices.indexOf(dayIdx);
         if (vi !== -1) w *= viralMagnitudes[vi] || 2.5;
         out.push({ day: d.toISOString().slice(0, 10), weight: w });
@@ -1345,16 +1324,13 @@
       return out;
     }
 
-    // Range scaling. Numbers calibrated to feel realistic for a "successful
-    // technical blog" — see spec section 5/6.
     const DEMO_RANGE_TOTALS = {
       'today': { visitors: 487,   prev: 412,    days: 1,  group: 'hour'  },
       '7d':    { visitors: 3842,  prev: 3156,   days: 7,  group: 'day'   },
       '30d':   { visitors: 14873, prev: 11249,  days: 30, group: 'day'   },
       '90d':   { visitors: 41247, prev: 28934,  days: 90, group: 'week'  },
     };
-    // Custom date range in demo mode falls back to 30d numbers — the demo
-    // isn't meant to be queryable, just visually representative.
+    // Custom range falls back to 30d; demo isn't queryable.
     const DEMO_CUSTOM_FALLBACK = '30d';
 
     // Build a complete demo payload for the given preset. Returns
@@ -1369,7 +1345,7 @@
       // Pageviews exceed visitors (multi-page sessions). ~1.25 pages/visit.
       const pageviews = Math.round(visitors * 1.25);
 
-      // Build the time-series shape first — we need the per-bucket weights
+      // Build the time-series shape first; we need the per-bucket weights
       // so we can distribute each path's count across the same buckets.
       let buckets;            // array of { day, weight, hourly? }
       let hourlyMode = false;
@@ -1451,17 +1427,14 @@
       constructor(baseURL, apiKey) {
         this.baseURL = baseURL.replace(/\/+$/, '');
         this.apiKey = apiKey;
-        // lastCompleted is the wall-clock time the previous request *finished*,
-        // not when its slot was acquired. The next request waits RATE_LIMIT_MS
-        // from this point — so we never have two fetches in flight at once.
+        // Gap is measured from completion, not acquisition.
         this.lastCompleted = 0;
         this.queue = Promise.resolve();
       }
 
       async _fetchOnce(endpoint) {
         const url = this.baseURL + endpoint;
-        // Note: no Content-Type on GETs (no body). Authorization alone forces
-        // the CORS preflight; adding Content-Type would gain nothing.
+        // Authorization header alone triggers the CORS preflight.
         const res = await fetch(url, {
           method: 'GET',
           headers: { 'Authorization': 'Bearer ' + this.apiKey },
@@ -1514,7 +1487,7 @@
             this._cacheKey(endpoint),
             JSON.stringify({ data, timestamp: Date.now() })
           );
-        } catch (e) { /* private mode / quota — non-fatal */ }
+        } catch (e) { /* private mode / quota, non-fatal */ }
       }
 
       // Wipe all cache entries belonging to this baseURL.
@@ -1530,14 +1503,8 @@
         } catch (e) { /* ignore */ }
       }
 
-      // Strict-sequential request: the entire fetch (including retries) runs
-      // inside the queue chain, so two callers can never have fetches in flight
-      // at the same time. Cache reads happen *outside* the queue — a cache hit
-      // doesn't consume a rate-limit slot.
-      //
-      // Retries on transient failures: TypeError (fetch/CORS error, commonly a
-      // 429 with stripped CORS headers) and explicit 429s. Auth and 404 never
-      // retry — user action is required.
+      // Cache reads bypass the queue. Retries cover transient failures
+      // (TypeError / 429); auth and 404 never retry.
       async request(endpoint, { retries = 2, forceRefresh = false } = {}) {
         if (!forceRefresh) {
           const cached = this._readCache(endpoint);
@@ -1573,9 +1540,7 @@
           }
         };
 
-        // Chain onto the queue so this run waits for any previous run to finish.
-        // The chain swallows upstream rejections (passing `run` as both then/catch
-        // handlers) so one caller's failure doesn't stall the queue for the next.
+        // Chain ensures strict serialization; swallows upstream rejections.
         const next = this.queue.then(run, run);
         this.queue = next.catch(() => {});
         return next;
@@ -1603,20 +1568,16 @@
     }
 
     // ============================================================
-    // useInView — fires once when the ref'd element enters viewport.
-    // Used to lazy-trigger fetches for below-the-fold cards so the initial
-    // load is small (3 requests) and later tiers fetch on scroll.
+    // useInView: fires once when the ref'd element enters viewport.
     // ============================================================
     function useInView({ threshold = 0.1, rootMargin = '0px' } = {}) {
       const ref = useRef(null);
       const [inView, setInView] = useState(false);
       useEffect(() => {
-        if (inView) return; // sticky once visible — no re-observe
+        if (inView) return;
         const el = ref.current;
         if (!el) return;
-        // Defensive fallback for environments without IntersectionObserver
-        // (very old browsers). The dashboard never SSRs — it's a static
-        // single-page app — so this never fires in normal use.
+        // Fallback for environments without IntersectionObserver.
         if (typeof IntersectionObserver === 'undefined') { setInView(true); return; }
         const observer = new IntersectionObserver(([entry]) => {
           if (entry.isIntersecting) {
@@ -1658,7 +1619,7 @@
         if (!baseURL) { setError('Please enter your GoatCounter URL.'); return; }
         if (!/^https?:\/\//i.test(baseURL)) baseURL = 'https://' + baseURL;
         baseURL = baseURL.replace(/\/+$/, '');
-        // If user pasted "...goatcounter.com/somepath", strip it — API lives at the root.
+        // Strip path segments; API lives at the root.
         try {
           const u = new URL(baseURL);
           baseURL = u.protocol + '//' + u.host;
@@ -2317,18 +2278,14 @@
     }
 
     // ============================================================
-    // WORLD MAP — choropleth, lazy-attached to the Countries card.
-    // Path data ships separately at assets/world-map.js to keep Babel out
-    // of its parse path. Color scale is sqrt so the bottom 80% of countries
-    // stay distinguishable. Single delegated mouse handler on the SVG root
-    // (not per-path) so 174 countries don't each carry a listener.
+    // WORLD MAP: choropleth, lazy-attached to the Countries card.
+    // Sqrt color scale so the bottom 80% of countries stay visible.
     // ============================================================
     const WorldMap = React.memo(function WorldMap({ data, total, highlightCountry }) {
       const [tooltip, setTooltip] = useState(null);
       const wrapRef = useRef(null);
 
-      // Resolve country names to ISO codes; collect any unmapped names
-      // for diagnostics (logged once, only when ?debug=1 is in the URL).
+      // Resolve names to ISO codes; unmapped names logged with ?debug=1.
       const byCode = useMemo(() => {
         const out = new Map();
         const unmapped = [];
@@ -2357,14 +2314,11 @@
         return m;
       }, [byCode]);
 
-      // Map data is provided by assets/world-map.js. If the script failed
-      // to load (offline, blocked), render nothing — country list still works.
+      // Graceful fallback if world-map.js failed to load.
       const paths = typeof window !== 'undefined' ? window.WORLD_MAP_PATHS : null;
       const viewBox = (typeof window !== 'undefined' && window.WORLD_MAP_VIEWBOX) || '0 0 1000 500';
 
-      // Memoize SVG path nodes so hover state changes don't recreate them.
-      // Reconciliation still walks them, but each node is reference-equal
-      // and the DOM stays untouched.
+      // Memoize path nodes so hover doesn't recreate the DOM.
       const highlightCode = highlightCountry ? (countryNameToCode(highlightCountry) || highlightCountry) : null;
 
       const renderedPaths = useMemo(() => {
@@ -2497,7 +2451,7 @@
       const endpointFor = useCallback((key) => {
         switch (key) {
           case 'total':     return q('/api/v0/stats/total');
-          case 'hits':      return q(`/api/v0/stats/hits?limit=20&group=${group}`);
+          case 'hits':      return q('/api/v0/stats/hits?limit=20');
           case 'browsers':  return q('/api/v0/stats/browsers');
           case 'systems':   return q('/api/v0/stats/systems');
           case 'sizes':     return q('/api/v0/stats/sizes');
@@ -2506,9 +2460,9 @@
           case 'campaigns': return q('/api/v0/stats/campaigns');
           default: return null;
         }
-      }, [q, group]);
+      }, [q]);
 
-      // Reset state when range or refresh changes — cache makes re-fetch fast on repeats.
+      // Reset state when range or refresh changes.
       useEffect(() => {
         setData({});
         setErrors({});
@@ -2516,9 +2470,7 @@
         setProgress({ fired: 0, done: 0 });
       }, [start, end, refreshTick]);
 
-      // Generic tier runner. Each entry is a key. Errors and data are tracked
-      // per key so a single failure never bricks the dashboard. Progress
-      // counters drive the topbar "Loading X of Y…" indicator.
+      // Per-key fetch; a single failure never bricks the dashboard.
       const runTier = useCallback(async (keys, cancelledRef) => {
         for (const k of keys) {
           if (cancelledRef.current) return;
@@ -2534,26 +2486,21 @@
           } catch (e) {
             if (cancelledRef.current) { earlyReturn = true; return; }
             if (e.kind === 'auth') { setAuthErr(e); earlyReturn = true; return; }
-            // campaigns is optional — older self-hosted instances may 404
+            // campaigns is optional; older self-hosted instances may 404
             if (k === 'campaigns' && e.kind === 'notfound') {
               setData(prev => ({ ...prev, campaigns: { stats: [] } }));
               continue;
             }
             setErrors(prev => ({ ...prev, [k]: e.message || 'Failed' }));
           } finally {
-            // Always pair fired++ with done++ so the progress counter never
-            // gets stuck. React 18 silently no-ops setState on unmounted
-            // components, so we don't need to guard for that.
+            // Always pair fired++ with done++.
             setProgress(p => ({ ...p, done: p.done + 1 }));
           }
           if (earlyReturn) return;
         }
       }, [client, endpointFor]);
 
-      // Single-key retry — fires one request through the queue with cache bypass.
-      // By the time the user notices a failed card and clicks retry, the bucket
-      // has refilled, and a single isolated request is very likely to succeed.
-      // Dedupe on rapid clicks so the same retry doesn't queue twice.
+      // Single-key retry with cache bypass. Dedupes rapid clicks.
       const inFlightRetries = useRef(new Set());
       const retryKey = useCallback(async (key) => {
         if (inFlightRetries.current.has(key)) return;
@@ -2587,12 +2534,8 @@
         setLastUpdatedAt(Date.now());
       }, [demoMode, preset, customStart, customEnd, refreshTick]);
 
-      // Network warm-up: prime DNS, TCP, TLS, and CORS preflight before
-      // real data requests. On mobile (especially iOS Safari), the first
-      // fetch after a long tab suspension often fails because the network
-      // stack isn't ready. This throwaway request absorbs that penalty.
-      // Runs once per session; the bfcache handler resets the flag so a
-      // restore triggers a fresh warm-up.
+      // Throwaway request primes DNS/TLS/CORS before real fetches.
+      // Absorbs iOS Safari's post-suspension network penalty.
       const warmUpDone = useRef(false);
       const warmUp = useCallback(async () => {
         if (warmUpDone.current) return;
@@ -2609,12 +2552,8 @@
         }
       }, [config.baseURL, config.apiKey]);
 
-      // Tier 1 — always fires. KPIs, traffic chart, top pages, and languages.
-      // Plus the previous-period total for the trend KPI.
-      // Languages is in Tier 1 (not lazy) because it sits next to Top Pages
-      // in the same row — an asymmetric skeleton would look broken. The
-      // extra ~500ms (one queue slot) is invisible after the first load
-      // since the cache absorbs it.
+      // Tier 1: always fires. Languages included here (not lazy) because
+      // it shares a row with Top Pages and an asymmetric skeleton looks broken.
       useEffect(() => {
         if (demoMode) return;
         const cancelledRef = { current: false };
@@ -2636,14 +2575,14 @@
           } catch (e) {
             if (!cancelledRef.current) setPrevTotal(null);
           } finally {
-            // Always increment done — see runTier finally for the rationale.
+            // Always pair fired++ with done++.
             setProgress(p => ({ ...p, done: p.done + 1 }));
           }
         })();
         return () => { cancelledRef.current = true; };
       }, [demoMode, client, start, end, refreshTick, runTier, warmUp]);
 
-      // Tier 2 — donut row (browsers / OS / devices). Lazy on visibility.
+      // Tier 2: donut row (browsers / OS / devices). Lazy.
       const [donutRowRef, donutInView] = useInView();
       useEffect(() => {
         if (demoMode || !donutInView) return;
@@ -2652,9 +2591,7 @@
         return () => { cancelledRef.current = true; };
       }, [demoMode, donutInView, refreshTick, runTier]);
 
-      // Tier 3 — Countries (with map). Lazy on visibility. Languages used
-      // to live here too but moved to Tier 1 when the layout paired it with
-      // Top Pages.
+      // Tier 3: countries (with map). Lazy.
       const [geoRowRef, geoInView] = useInView();
       useEffect(() => {
         if (demoMode || !geoInView) return;
@@ -2663,7 +2600,7 @@
         return () => { cancelledRef.current = true; };
       }, [demoMode, geoInView, refreshTick, runTier]);
 
-      // Tier 4 — campaigns. Lazy on visibility.
+      // Tier 4: campaigns. Lazy.
       const [campaignsRef, campaignsInView] = useInView();
       useEffect(() => {
         if (demoMode || !campaignsInView) return;
@@ -2672,9 +2609,7 @@
         return () => { cancelledRef.current = true; };
       }, [demoMode, campaignsInView, refreshTick, runTier]);
 
-      // bfcache restore: browser preserved the JS heap across a back/forward
-      // navigation or long tab suspension. React state is stale — force a full
-      // re-fetch by bumping refreshTick so every tier effect re-fires.
+      // bfcache restore: stale React state, force full re-fetch.
       useEffect(() => {
         const onPageShow = (e) => { if (e.persisted) { warmUpDone.current = false; setRefreshTick(t => t + 1); } };
         window.addEventListener('pageshow', onPageShow);
@@ -2711,10 +2646,10 @@
       const siteName = site?.cname
         || (site?.code ? `${site.code}.goatcounter.com` : new URL(config.baseURL).host);
 
-      // Build time-series for traffic chart from hits "max"-grouped buckets.
-      // GoatCounter's hits payload returns per-path series keyed by group:
-      //   stats: [{ day: 'YYYY-MM-DD', daily: N, hourly: [..] }]
-      // Aggregate across paths for the overall traffic line.
+      // Build time-series for traffic chart from per-path stats.
+      // The API always returns daily granularity: { day, daily, hourly }.
+      // For week/month views we aggregate client-side so the chart has
+      // the right number of data points regardless of server version.
       const trafficSeries = useMemo(() => {
         if (!data || !data.hits || !Array.isArray(data.hits.hits)) return [];
         const buckets = new Map();
@@ -2728,8 +2663,22 @@
                 buckets.set(ts, (buckets.get(ts) || 0) + (cnt || 0));
               });
             } else {
-              const ts = `${s.day}T00:00:00Z`;
-              buckets.set(ts, (buckets.get(ts) || 0) + (s.daily || 0));
+              let key;
+              if (group === 'week') {
+                const m = s.day.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                if (m) {
+                  const d = new Date(+m[1], +m[2] - 1, +m[3]);
+                  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+                  key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T00:00:00Z`;
+                } else {
+                  key = `${s.day}T00:00:00Z`;
+                }
+              } else if (group === 'month') {
+                key = `${s.day.slice(0, 7)}-01T00:00:00Z`;
+              } else {
+                key = `${s.day}T00:00:00Z`;
+              }
+              buckets.set(key, (buckets.get(key) || 0) + (s.daily || 0));
             }
           }
         }
@@ -2882,8 +2831,7 @@
             </div>
           )}
 
-          {/* Per-key state helpers — render real card when ready, error card when failed,
-              skeleton otherwise. Keeps the dashboard usable when one endpoint fails. */}
+          {/* Per-key state: ready → real card, failed → error card, else skeleton. */}
           {(() => {
             const ready = (k) => data && (data[k] !== undefined);
             const failed = (k) => errors[k] !== undefined;
@@ -2947,11 +2895,7 @@
                     : <SkeletonCard h={280} />}
                 </section>
 
-                {/* Top pages + Languages — paired list cards. 70/30 split.
-                    Both load in Tier 1 so they appear together; an asymmetric
-                    skeleton (one rendered, one shimming) would look broken.
-                    Aggregate referrers aren't returned by GoatCounter at the
-                    dashboard level — click any row in Top Pages to drill in. */}
+                {/* Top pages + Languages: paired list cards, 70/30 split. */}
                 <section className="grid grid-7-3" style={{marginBottom: 20}}>
                   {failed('hits') ? <ErrCard title="Top pages" onRetry={() => retryKey('hits')} />
                     : ready('hits') ? (
@@ -2969,7 +2913,7 @@
                     : <SkeletonCard />}
                 </section>
 
-                {/* Donuts: browsers / OS / devices — lazy on visibility (Tier 2) */}
+                {/* Donuts: browsers / OS / devices (Tier 2, lazy) */}
                 <section ref={donutRowRef} className="grid grid-3" style={{marginBottom: 20}}>
                   {failed('browsers') ? <ErrCard title="Browsers" onRetry={() => retryKey('browsers')} />
                     : ready('browsers') ? <DonutCard title="Browsers" stats={data?.browsers?.stats} client={client} dateRange={dateRange} demoMode={demoMode} page="browsers" demoDetails={DEMO_BROWSER_DETAILS} />
@@ -2982,10 +2926,7 @@
                     : <SkeletonCard />}
                 </section>
 
-                {/* Countries with embedded world map — full width, lazy on
-                    visibility (Tier 3). The map is the heaviest visual on the
-                    page and benefits from the full width; users who only want
-                    quick stats never need to scroll past it. */}
+                {/* Countries with world map (Tier 3, lazy) */}
                 <section ref={geoRowRef} style={{marginBottom: 20}}>
                   {failed('locations') ? <ErrCard title="Countries" onRetry={() => retryKey('locations')} />
                     : ready('locations') ? (
@@ -3003,7 +2944,7 @@
                     ) : <SkeletonCard />}
                 </section>
 
-                {/* Campaigns — lazy on visibility (Tier 4). Only renders the card if data has rows. */}
+                {/* Campaigns (Tier 4, lazy). Only renders if data has rows. */}
                 <section ref={campaignsRef} style={{marginBottom: 20}}>
                   {ready('campaigns') && data?.campaigns?.stats?.length > 0 && (
                     <div className="grid">
