@@ -2,7 +2,7 @@
 
 This guide covers the most common issues people run into when connecting the GoatCounter Dashboard to their analytics instance. If your problem isn't listed here, please [open an issue](https://github.com/abhishekhsingh/goatcounter-dashboard/issues).
 
-**Quick sanity check:** click **Try Demo** on the connect screen first. If the dashboard loads fine in demo mode but fails with your real credentials, the dashboard itself is working — the issue is between your browser and your GoatCounter instance. Work through the sections below.
+**Quick sanity check:** click **Try Demo** on the connect screen first. If the dashboard loads fine in demo mode but fails with your real credentials, the dashboard itself is working. The issue is between your browser and your GoatCounter instance. Work through the sections below.
 
 ---
 
@@ -10,11 +10,11 @@ This guide covers the most common issues people run into when connecting the Goa
 
 ### "Could not reach [URL] … If you have an ad blocker … try disabling it"
 
-This is the most common error, and it can have several causes. The error message itself hints at ad blockers — work through the causes in order:
+This is the most common error, and it can have several causes. The error message itself hints at ad blockers; work through the causes in order:
 
 #### 1. Ad blocker interference (most common cause)
 
-**uBlock Origin, AdBlock Plus, Brave Shields, Pi-hole, and DNS-level blockers** maintain filter lists that include `*.goatcounter.com`. When the dashboard (served from a different domain) makes API requests to your GoatCounter instance, the ad blocker silently intercepts and kills the requests *before they leave your browser*. The browser reports this as a network error or CORS failure — the error message is misleading because the request never actually reached the server.
+**uBlock Origin, AdBlock Plus, Brave Shields, Pi-hole, and DNS-level blockers** maintain filter lists that include `*.goatcounter.com`. When the dashboard (served from a different domain) makes API requests to your GoatCounter instance, the ad blocker silently intercepts and kills the requests *before they leave your browser*. The browser reports this as a network error or CORS failure. The error message is misleading because the request never actually reached the server.
 
 **Fix:** Disable your ad blocker for the page running the dashboard, or add an exception for your GoatCounter domain. In uBlock Origin, click the extension icon and toggle the big power button off for the dashboard site.
 
@@ -22,7 +22,7 @@ This is the most common error, and it can have several causes. The error message
 
 #### 2. URL format
 
-Enter just the base URL of your GoatCounter instance — no trailing slash, no path segments:
+Enter just the base URL of your GoatCounter instance, no trailing slash, no path segments:
 
 | Correct | Incorrect |
 |---------|-----------|
@@ -56,9 +56,9 @@ GoatCounter API keys have permission levels:
 |---|---|---|
 | **Read only** | Yes | Yes |
 | **Count and read** | Yes | Yes |
-| **Count only** | No | **No** — returns 403 on every stats endpoint |
+| **Count only** | No | **No**, returns 403 on every stats endpoint |
 
-If you created a **"Count only"** key, the connection test (`/api/v0/me`) may succeed, but every subsequent stats call will fail with 403 — which bounces you back to the connect screen.
+If you created a **"Count only"** key, the connection test (`/api/v0/me`) may succeed, but every subsequent stats call will fail with 403, which bounces you back to the connect screen.
 
 **Fix:** Go to your GoatCounter site → click your username (top right) → **Settings** → **API** tab → create a new key with **"Read only"** or **"Count & Read"** permission.
 
@@ -66,7 +66,7 @@ If you created a **"Count only"** key, the connection test (`/api/v0/me`) may su
 
 ### "Not found: [endpoint]. Check that the URL points to your GoatCounter site (not a sub-path)."
 
-The dashboard reached a server, but it returned 404 for an API endpoint. This usually means the URL points to something that isn't a GoatCounter instance — double-check you entered the right hostname.
+The dashboard reached a server, but it returned 404 for an API endpoint. This usually means the URL points to something that isn't a GoatCounter instance. Double-check you entered the right hostname.
 
 ---
 
@@ -79,7 +79,7 @@ This is usually **rate limiting**. GoatCounter's API uses a token-bucket rate li
 - Self-hosted instances with a stricter rate limit configuration
 
 **What to do:**
-- Click the **Retry** button on each failed card — it retries just that one request, which usually succeeds once the rate limit bucket refills.
+- Click the **Retry** button on each failed card. It retries just that one request, which usually succeeds once the rate limit bucket refills.
 - The dashboard shows a banner at the top listing which sections failed.
 - Responses are cached for 60 seconds, so switching back to a date range you just viewed won't trigger new API calls.
 
@@ -91,7 +91,7 @@ This is usually **rate limiting**. GoatCounter's API uses a token-bucket rate li
 
 GoatCounter itself sets CORS headers on its API responses. If your reverse proxy strips or overwrites these headers, the browser will block the dashboard's requests.
 
-**nginx** — make sure your proxy configuration forwards CORS headers:
+**nginx:** make sure your proxy configuration forwards CORS headers:
 
 ```nginx
 location / {
@@ -108,7 +108,7 @@ location / {
 }
 ```
 
-**Alternative** — if GoatCounter's built-in CORS headers aren't making it through your proxy, add them directly in nginx:
+**Alternative:** if GoatCounter's built-in CORS headers aren't making it through your proxy, add them directly in nginx:
 
 ```nginx
 add_header Access-Control-Allow-Origin "*" always;
@@ -118,7 +118,7 @@ add_header Access-Control-Allow-Headers "Authorization, Content-Type" always;
 
 Use a specific origin instead of `*` in production if possible (e.g., `https://yourusername.github.io`).
 
-**Caddy** — Caddy generally proxies all response headers by default. If you've overridden headers, ensure CORS headers pass through:
+**Caddy:** Caddy generally proxies all response headers by default. If you've overridden headers, ensure CORS headers pass through:
 
 ```caddy
 stats.example.com {
@@ -145,15 +145,15 @@ GoatCounter returns hourly data bucketed in your *site's* configured timezone, n
 
 ### World map doesn't show small countries (Singapore, Monaco, Vatican, etc.)
 
-The choropleth uses Natural Earth 110m resolution for fast loading — microstate boundaries don't exist at this scale. These countries still appear in the **country list** below the map with their flag and visitor count.
+The choropleth uses Natural Earth 110m resolution for fast loading. Microstate boundaries don't exist at this scale. These countries still appear in the **country list** below the map with their flag and visitor count.
 
 ### Campaign card doesn't appear
 
-The campaigns card only renders when your GoatCounter instance has collected UTM-tagged traffic (`utm_source`, `utm_medium`, `utm_campaign`). If no campaign data exists, the card is intentionally hidden — it's not a bug.
+The campaigns card only renders when your GoatCounter instance has collected UTM-tagged traffic (`utm_source`, `utm_medium`, `utm_campaign`). If no campaign data exists, the card is intentionally hidden; it's not a bug.
 
 ### Devices card shows "Unknown" for all entries
 
-This was a bug in earlier versions that has been fixed. If you still see it, clear your browser's localStorage for the dashboard domain — the dashboard caches API responses and the stale cached response may be the problem.
+This was a bug in earlier versions that has been fixed. If you still see it, clear your browser's localStorage for the dashboard domain. The dashboard caches API responses and the stale cached response may be the problem.
 
 **How to clear:** Open Developer Tools (F12) → Application/Storage tab → Local Storage → delete all entries for the dashboard's domain. Or use the dashboard's **Refresh** button in the settings menu (gear icon, top right), which clears the response cache.
 
@@ -171,23 +171,23 @@ The dashboard requires a modern browser with ES2020+ support:
 | Firefox | 78+ |
 | Safari | 13+ |
 
-If using **Brave**, Brave Shields may block GoatCounter domains by default — same issue as ad blockers. Disable shields for the dashboard page.
+If using **Brave**, Brave Shields may block GoatCounter domains by default, same issue as ad blockers. Disable shields for the dashboard page.
 
 ### localStorage errors or credentials not persisting
 
 The dashboard stores your credentials and response cache in `localStorage`. Some environments restrict this:
 
-- **Private/incognito browsing** — some browsers limit or disable localStorage in private mode.
-- **Aggressive privacy settings** — certain Firefox configurations (`dom.storage.enabled = false`) disable it entirely.
-- **Storage quota exceeded** — extremely rare, but possible if localStorage is nearly full from other sites.
+- **Private/incognito browsing:** some browsers limit or disable localStorage in private mode.
+- **Aggressive privacy settings:** certain Firefox configurations (`dom.storage.enabled = false`) disable it entirely.
+- **Storage quota exceeded:** extremely rare, but possible if localStorage is nearly full from other sites.
 
 **Symptoms:** The dashboard may fail to save credentials (you have to re-enter them each visit) or fail to cache responses (every page load makes fresh API calls).
 
-**Fix:** Try clearing localStorage for the dashboard domain, then reconnect. If localStorage is completely unavailable, the dashboard will still work — it just won't persist credentials or cache responses between page loads.
+**Fix:** Try clearing localStorage for the dashboard domain, then reconnect. If localStorage is completely unavailable, the dashboard will still work, it just won't persist credentials or cache responses between page loads.
 
 ### Demo mode works but real connection doesn't
 
-This confirms the dashboard code is working correctly. Demo mode uses in-memory sample data and makes zero network requests. The issue is between your browser and your GoatCounter instance — work through the [Connection Issues](#connection-issues) section above.
+This confirms the dashboard code is working correctly. Demo mode uses in-memory sample data and makes zero network requests. The issue is between your browser and your GoatCounter instance. Work through the [Connection Issues](#connection-issues) section above.
 
 ---
 
@@ -196,11 +196,11 @@ This confirms the dashboard code is working correctly. Demo mode uses in-memory 
 ### Dashboard loads slowly on first visit
 
 The initial load makes up to 13 API calls spread across 4 lazy-load tiers:
-1. **Tier 1 (immediate):** Total visitors + traffic chart — 3 requests
-2. **Tier 2 (scroll):** Browsers, OS, Devices — 3 requests
-3. **Tier 3 (scroll):** Countries, Languages — 2 requests
-4. **Tier 4 (scroll):** Campaigns — 1 request
-5. **Previous-period comparisons** — additional requests for trend arrows
+1. **Tier 1 (immediate):** Total visitors + traffic chart, 3 requests
+2. **Tier 2 (scroll):** Browsers, OS, Devices, 3 requests
+3. **Tier 3 (scroll):** Countries, Languages, 2 requests
+4. **Tier 4 (scroll):** Campaigns, 1 request
+5. **Previous-period comparisons:** additional requests for trend arrows
 
 Tiers 2-4 only fire when their cards scroll into view (`IntersectionObserver`), so the initial visible load is just 3 requests. On slow connections or heavily loaded GoatCounter instances, the full load can take 15-30 seconds.
 
