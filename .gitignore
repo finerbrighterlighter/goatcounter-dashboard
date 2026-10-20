@@ -33,3 +33,6 @@ __pycache__/
 # Claude Code local config
 .claude/
 .wrangler/
+
+# Local agent workspace
+.superpowers/

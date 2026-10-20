@@ -119,3 +119,4 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
   *,*::before,*::after{animation:none !important;transition:none !important;scroll-behavior:auto !important}
   .sk{background-color:var(--skeleton-base)}
 }
+.topbar-logo{width:28px;height:28px;display:block;flex:none}

@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+  <script>try{var t=localStorage.getItem('gc-dashboard-theme-v1');document.documentElement.dataset.theme=t==='dark'||t==='light'?t:(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark')}catch(e){}</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Analytics · htunteza.com</title>
-  <meta name="description" content="A modern, beautiful, open-source dashboard for GoatCounter analytics." />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%90%3C/text%3E%3C/svg%3E" />
+  <meta name="description" content="Public visitor statistics for htunteza.com, from GoatCounter." />
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <meta name="theme-color" content="#f3f3ef" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#15171a" media="(prefers-color-scheme: dark)" />
   <style>
@@ -965,7 +969,12 @@
       'Ukraine':'🇺🇦','New Zealand':'🇳🇿','Hong Kong':'🇭🇰','Taiwan':'🇹🇼','Thailand':'🇹🇭','Philippines':'🇵🇭',
       'Malaysia':'🇲🇾','Chile':'🇨🇱','Colombia':'🇨🇴','Austria':'🇦🇹','Hungary':'🇭🇺',
     };
-    function flagFor(name) { return COUNTRY_FLAGS[name] || '🌐'; }
+    function flagFor(name, id) {
+      if (typeof id === 'string' && /^[A-Z]{2}$/.test(id)) {
+        return String.fromCodePoint(...[...id].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
+      }
+      return COUNTRY_FLAGS[name] || '🌐';
+    }
 
     // Country name → ISO 3166-1 alpha-2 code, used to look up paths in the
     // world map data shipped at assets/world-map.js. GoatCounter returns
@@ -2296,8 +2305,8 @@
           // If the same ISO appears twice (shouldn't normally), sum counts.
           const prev = out.get(code);
           out.set(code, prev
-            ? { name: prev.name, count: prev.count + row.count }
-            : { name: row.name, count: row.count });
+            ? { ...prev, count: prev.count + row.count }
+            : { name: row.name, id: row.id, count: row.count });
         }
         if (unmapped.length) {
           try {
@@ -2363,6 +2372,7 @@
           x: point.clientX - wrapRect.left,
           y: point.clientY - wrapRect.top,
           name: entry.name,
+          id: entry.id,
           count: entry.count,
           pct: total > 0 ? ((entry.count / total) * 100).toFixed(1) : '0.0',
         });
@@ -2406,7 +2416,7 @@
           </svg>
           {tooltip && (
             <div className="map-tooltip" style={{ left: ttLeft, top: ttTop }}>
-              <div className="tt-name">{flagFor(tooltip.name)} {tooltip.name}</div>
+              <div className="tt-name">{flagFor(tooltip.name, tooltip.id)} {tooltip.name}</div>
               <div className="tt-stats">{fmtNum(tooltip.count)} · {tooltip.pct}%</div>
             </div>
           )}
@@ -2726,9 +2736,9 @@
           {/* Top bar */}
           <header className="topbar">
             <div className="topbar-brand">
-              <span className="topbar-logo" aria-hidden="true">🐐</span>
+              <img className="topbar-logo" src="assets/duck.svg" alt="" aria-hidden="true" />
               <div className="topbar-titles">
-                <h1 className="topbar-title">GoatCounter Dashboard</h1>
+                <h1 className="topbar-title">Analytics</h1>
                 <p className="topbar-site truncate">{siteName}</p>
               </div>
             </div>
@@ -2925,7 +2935,7 @@
                       <TopListCard
                         title="Countries"
                         stats={data?.locations?.stats}
-                        prefix={(x) => <span style={{marginRight:8, fontSize:'1rem'}}>{flagFor(x.name)}</span>}
+                        prefix={(x) => <span style={{marginRight:8, fontSize:'1rem'}}>{flagFor(x.name, x.id)}</span>}
                         topSlot={<WorldMap data={data?.locations?.stats} total={totalNum} />}
                         client={client}
                         dateRange={dateRange}
