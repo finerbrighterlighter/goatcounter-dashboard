@@ -4,10 +4,10 @@
  * No cards, shadows, gradients, pills or rounded boxes. */
 
 /* ---------- fonts (self-hosted, SIL Open Font License; see fonts/README.md) ---------- */
-@font-face{font-family:"Newsreader";font-style:normal;font-weight:200 800;font-display:swap;src:url(fonts/newsreader-latin-opsz-normal.woff2) format("woff2-variations"),url(fonts/newsreader-latin-opsz-normal.woff2) format("woff2")}
-@font-face{font-family:"Newsreader";font-style:italic;font-weight:200 800;font-display:swap;src:url(fonts/newsreader-latin-opsz-italic.woff2) format("woff2-variations"),url(fonts/newsreader-latin-opsz-italic.woff2) format("woff2")}
-@font-face{font-family:"Karla";font-style:normal;font-weight:200 800;font-display:swap;src:url(fonts/karla-latin-wght-normal.woff2) format("woff2-variations"),url(fonts/karla-latin-wght-normal.woff2) format("woff2")}
-@font-face{font-family:"Karla";font-style:italic;font-weight:200 800;font-display:swap;src:url(fonts/karla-latin-wght-italic.woff2) format("woff2-variations"),url(fonts/karla-latin-wght-italic.woff2) format("woff2")}
+@font-face{font-family:"Newsreader";font-style:normal;font-weight:200 800;font-display:swap;src:url(fonts/newsreader-latin-opsz-normal.woff2) format("woff2")}
+@font-face{font-family:"Newsreader";font-style:italic;font-weight:200 800;font-display:swap;src:url(fonts/newsreader-latin-opsz-italic.woff2) format("woff2")}
+@font-face{font-family:"Karla";font-style:normal;font-weight:200 800;font-display:swap;src:url(fonts/karla-latin-wght-normal.woff2) format("woff2")}
+@font-face{font-family:"Karla";font-style:italic;font-weight:200 800;font-display:swap;src:url(fonts/karla-latin-wght-italic.woff2) format("woff2")}
 
 /* ---------- tokens: editorial palette mapped onto the upstream variables ---------- */
 :root{
@@ -21,7 +21,7 @@
   --text:#e9e7e0; --text-secondary:#a09e97; --text-muted:#a09e97;
   --accent:#dcb85a; --accent-hover:#dcb85a; --accent-dim:#2c271b;
   --success:#7fb07f; --danger:#e07a80;
-  --chart-1:#dcb85a; --chart-2:#7fb07f; --chart-3:#56b4e9; --chart-4:#d8b24a; --chart-5:#e07a80; --chart-6:#a09e97;
+  --chart-1:#dcb85a; --chart-2:#7fb07f; --chart-3:#56b4e9; --chart-4:#cc79a7; --chart-5:#e07a80; --chart-6:#a09e97;
   --shadow:none; --shadow-lg:none;
   --skeleton-base:#262a2e; --skeleton-shine:#34373c;
 }
@@ -32,7 +32,7 @@
   --text:#1b1d20; --text-secondary:#5b5f66; --text-muted:#5b5f66;
   --accent:#8a5a0c; --accent-hover:#8a5a0c; --accent-dim:#f1e7cd;
   --success:#4d7a4f; --danger:#8f1d21;
-  --chart-1:#8a5a0c; --chart-2:#4d7a4f; --chart-3:#0072b2; --chart-4:#b0851b; --chart-5:#8f1d21; --chart-6:#5b5f66;
+  --chart-1:#8a5a0c; --chart-2:#4d7a4f; --chart-3:#0072b2; --chart-4:#9e4a7a; --chart-5:#8f1d21; --chart-6:#5b5f66;
   --shadow:none; --shadow-lg:none;
   --skeleton-base:#e2e4de; --skeleton-shine:#cfd2cc;
 }
@@ -102,6 +102,7 @@ input:focus,select:focus{border-color:var(--accent)}
 .recharts-area-area{fill:var(--accent-dim);fill-opacity:1}
 .world-map path{fill:var(--rule-soft);stroke:var(--paper)}
 .world-map path[data-has="1"]{fill:var(--accent)}
+.world-map path[data-has="1"]:hover,.world-map path.map-selected{stroke:var(--text);stroke-width:1.5}
 .map-legend-bar{position:relative;background:color-mix(in srgb,var(--accent) 20%,transparent)}
 .map-legend-bar::before,.map-legend-bar::after{content:"";position:absolute;top:0;bottom:0;right:0}
 .map-legend-bar::before{width:66%;background:color-mix(in srgb,var(--accent) 55%,transparent)}
