@@ -4,21 +4,22 @@ import worker, { handleApi } from "../src/worker.js";
 
 const BASE = "https://analytics.htunteza.com";
 const UP = "https://finerbrighterlighter.goatcounter.com";
-let calls, upstream, limitOk, limitKeys, store;
+let calls, upstream, limitOk, limitKeys, globalOk, globalKeys, store;
 
 const env = () => ({
   GOATCOUNTER_URL: UP,
   GOATCOUNTER_TOKEN: { get: async () => "tok" },
   API_LIMITER: { limit: async ({ key }) => (limitKeys.push(key), { success: limitOk }) },
+  API_LIMITER_GLOBAL: { limit: async ({ key }) => (globalKeys.push(key), { success: globalOk }) },
 });
 const cache = {
   match: async (r) => store.get(r.url)?.clone(),
-  put: async (r, res) => void store.set(r.url, res),
+  put: async (r, res) => void store.set(r.url, res.clone()),
 };
 const get = (path, init) => handleApi(new Request(BASE + path, init), env(), {}, cache);
 
 beforeEach(() => {
-  calls = []; limitOk = true; limitKeys = []; store = new Map();
+  calls = []; limitOk = true; limitKeys = []; globalOk = true; globalKeys = []; store = new Map();
   upstream = () => new Response('{"ok":1}', { status: 200, headers: { "Content-Type": "application/json" } });
   globalThis.fetch = async (url, init) => {
     const req = new Request(url, init);
@@ -74,7 +75,54 @@ test("caches 200 for an hour", async () => {
   assert.equal(calls.length, 1);
   assert.equal(a.headers.get("X-Analytics-Cache"), "MISS");
   assert.equal(b.headers.get("X-Analytics-Cache"), "HIT");
-  assert.match(b.headers.get("Cache-Control"), /max-age=3600/);
+  assert.match(store.get(BASE + "/api/v0/stats/total").headers.get("Cache-Control"), /public, max-age=3600/);
+  assert.equal(a.headers.get("Cache-Control"), "no-store");
+  assert.equal(b.headers.get("Cache-Control"), "no-store");
+});
+
+test("errors are no-store", async () => {
+  assert.equal((await get("/api/v0/me")).headers.get("Cache-Control"), "no-store");
+  assert.equal((await get("/api/v0/stats/total", { method: "POST" })).headers.get("Cache-Control"), "no-store");
+});
+
+test("upstream 401/403 become uncached 502", async () => {
+  for (const status of [401, 403]) {
+    store.clear();
+    upstream = () => new Response("bad token", { status });
+    const res = await get("/api/v0/stats/total");
+    assert.equal(res.status, 502, String(status));
+    assert.equal(res.headers.get("Content-Type"), "application/json");
+    assert.equal(res.headers.get("Cache-Control"), "no-store");
+    assert.deepEqual(await res.json(), { error: "upstream unavailable" });
+    assert.equal(store.size, 0);
+  }
+});
+
+test("upstream network error becomes uncached 502", async () => {
+  upstream = () => { throw new TypeError("network down"); };
+  const res = await get("/api/v0/stats/total");
+  assert.equal(res.status, 502);
+  assert.deepEqual(await res.json(), { error: "upstream unavailable" });
+  assert.equal(store.size, 0);
+});
+
+test("global limit on miss returns 429 without upstream call", async () => {
+  globalOk = false;
+  const res = await get("/api/v0/stats/total");
+  assert.equal(res.status, 429);
+  assert.equal(res.headers.get("Retry-After"), "60");
+  assert.equal(calls.length, 0);
+  assert.deepEqual(globalKeys, ["global"]);
+});
+
+test("global limit does not apply to cache hits", async () => {
+  await get("/api/v0/stats/total");
+  globalOk = false;
+  const res = await get("/api/v0/stats/total");
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get("X-Analytics-Cache"), "HIT");
+  assert.equal(calls.length, 1);
+  assert.equal(globalKeys.length, 1);
 });
 
 test("does not cache upstream errors", async () => {

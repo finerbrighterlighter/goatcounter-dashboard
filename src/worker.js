@@ -5,7 +5,11 @@ const TTL = 3600;
 const PAGE = /^[A-Za-z0-9_]+$/;
 const ID = /^[A-Za-z0-9 _.,:+-]+$/;
 
-const text = (body, status, headers = {}) => new Response(body, { status, headers });
+const NO_STORE = { "Cache-Control": "no-store" };
+const text = (body, status, headers = {}) =>
+  new Response(body, { status, headers: { ...NO_STORE, ...headers } });
+const unavailable = () =>
+  text('{"error":"upstream unavailable"}', 502, { "Content-Type": "application/json" });
 
 // Returns the upstream path for an allowed stats request, else null.
 function allowedPath(pathname) {
@@ -40,24 +44,41 @@ export async function handleApi(request, env, ctx, cache) {
   const hit = await cache.match(cacheKey);
   if (hit) {
     const res = new Response(hit.body, hit);
+    res.headers.set("Cache-Control", "no-store");
     res.headers.set("X-Analytics-Cache", "HIT");
     return res;
   }
 
-  const upstream = await fetch(env.GOATCOUNTER_URL + path + url.search, {
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${await env.GOATCOUNTER_TOKEN.get()}`,
-    },
-  });
+  // Global cap on upstream calls; cached hits above are never limited here.
+  const global = await env.API_LIMITER_GLOBAL.limit({ key: "global" });
+  if (!global.success) return text("Too many requests", 429, { "Retry-After": "60" });
+
+  let upstream;
+  try {
+    upstream = await fetch(env.GOATCOUNTER_URL + path + url.search, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${await env.GOATCOUNTER_TOKEN.get()}`,
+      },
+    });
+  } catch {
+    return unavailable();
+  }
+  // A rejected token is our problem, not the visitor's: hide it as a 502.
+  if (upstream.status === 401 || upstream.status === 403) return unavailable();
+
   const res = new Response(upstream.body, {
     status: upstream.status,
     headers: { "Content-Type": upstream.headers.get("Content-Type") || "application/json" },
   });
   if (upstream.status === 200) {
-    res.headers.set("Cache-Control", `public, max-age=${TTL}`);
-    await cache.put(cacheKey, res.clone());
+    // Edge copy lives an hour; browsers always get no-store (the zone's
+    // Browser Cache TTL would otherwise stretch HITs to 4 h).
+    const stored = res.clone();
+    stored.headers.set("Cache-Control", `public, max-age=${TTL}`);
+    await cache.put(cacheKey, stored);
   }
+  res.headers.set("Cache-Control", "no-store");
   res.headers.set("X-Analytics-Cache", "MISS");
   return res;
 }
