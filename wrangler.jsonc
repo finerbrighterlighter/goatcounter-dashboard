@@ -1,0 +1,22 @@
+{
+  "name": "analytics",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-20",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "routes": [{ "pattern": "analytics.htunteza.com", "custom_domain": true }],
+  "vars": { "GOATCOUNTER_URL": "https://finerbrighterlighter.goatcounter.com" },
+  "secrets_store_secrets": [
+    {
+      "binding": "GOATCOUNTER_TOKEN",
+      "store_id": "fc2b78fbae2a468f83bbee503ec86b5c",
+      "secret_name": "GOATCOUNTER_TOKEN"
+    }
+  ],
+  "ratelimits": [
+    { "name": "API_LIMITER", "namespace_id": "1001", "simple": { "limit": 60, "period": 60 } }
+  ]
+}
