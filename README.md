@@ -1,5 +1,13 @@
 # 🐐 GoatCounter Dashboard
 
+> ## This fork
+>
+> This fork serves the dashboard from a Cloudflare Worker at its own origin, with no connect screen.
+>
+> - **What changed:** a Worker (`src/worker.js`) proxies `GET /api/v0/stats/*` to GoatCounter and adds the API token on the server. The page (`public/index.html`) talks to its own origin and loads its scripts with SRI hashes. `public/editorial.css` restyles the page.
+> - **Data stays server-side:** the token lives in a Cloudflare Secrets Store binding (`GOATCOUNTER_TOKEN`) and never reaches the browser. Only read-only stats paths are allowed. Responses are cached for 1 hour, and each IP gets 60 calls per minute.
+> - **Deploy:** Workers Builds deploys from `main`. To deploy by hand, run `npx wrangler deploy`. Run the tests with `npm test`.
+
 An open-source alternative dashboard for [GoatCounter](https://www.goatcounter.com/) analytics. Dark mode by default, interactive charts, fully responsive, and zero servers, zero build step, zero cost. It's a single `index.html` file that you can host anywhere (GitHub Pages, Netlify, your local disk).
 
 ![Dashboard Screenshot](assets/screenshot.png)
