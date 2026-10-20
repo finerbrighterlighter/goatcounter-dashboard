@@ -1,0 +1,120 @@
+/* Editorial theme: paper and ink, one ochre accent, hairlines.
+ * Loaded after the upstream <style> block, so it overrides it by order.
+ * Newsreader for what is read, Karla for labels and controls.
+ * No cards, shadows, gradients, pills or rounded boxes. */
+
+/* ---------- fonts (self-hosted, SIL Open Font License; see fonts/README.md) ---------- */
+@font-face{font-family:"Newsreader";font-style:normal;font-weight:200 800;font-display:swap;src:url(fonts/newsreader-latin-opsz-normal.woff2) format("woff2-variations"),url(fonts/newsreader-latin-opsz-normal.woff2) format("woff2")}
+@font-face{font-family:"Newsreader";font-style:italic;font-weight:200 800;font-display:swap;src:url(fonts/newsreader-latin-opsz-italic.woff2) format("woff2-variations"),url(fonts/newsreader-latin-opsz-italic.woff2) format("woff2")}
+@font-face{font-family:"Karla";font-style:normal;font-weight:200 800;font-display:swap;src:url(fonts/karla-latin-wght-normal.woff2) format("woff2-variations"),url(fonts/karla-latin-wght-normal.woff2) format("woff2")}
+@font-face{font-family:"Karla";font-style:italic;font-weight:200 800;font-display:swap;src:url(fonts/karla-latin-wght-italic.woff2) format("woff2-variations"),url(fonts/karla-latin-wght-italic.woff2) format("woff2")}
+
+/* ---------- tokens: editorial palette mapped onto the upstream variables ---------- */
+:root{
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --sans:"Karla",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+:root[data-theme="dark"]{
+  --paper:#15171a; --ink:#e9e7e0; --mute:#a09e97; --rule:#34373c; --rule-soft:#262a2e;
+  --bg:#15171a; --bg-surface:#15171a; --bg-surface-2:#15171a;
+  --border:#34373c;
+  --text:#e9e7e0; --text-secondary:#a09e97; --text-muted:#a09e97;
+  --accent:#dcb85a; --accent-hover:#dcb85a; --accent-dim:#2c271b;
+  --success:#7fb07f; --danger:#e07a80;
+  --chart-1:#dcb85a; --chart-2:#7fb07f; --chart-3:#56b4e9; --chart-4:#d8b24a; --chart-5:#e07a80; --chart-6:#a09e97;
+  --shadow:none; --shadow-lg:none;
+  --skeleton-base:#262a2e; --skeleton-shine:#34373c;
+}
+:root[data-theme="light"]{
+  --paper:#f3f3ef; --ink:#1b1d20; --mute:#5b5f66; --rule:#cfd2cc; --rule-soft:#e2e4de;
+  --bg:#f3f3ef; --bg-surface:#f3f3ef; --bg-surface-2:#f3f3ef;
+  --border:#cfd2cc;
+  --text:#1b1d20; --text-secondary:#5b5f66; --text-muted:#5b5f66;
+  --accent:#8a5a0c; --accent-hover:#8a5a0c; --accent-dim:#f1e7cd;
+  --success:#4d7a4f; --danger:#8f1d21;
+  --chart-1:#8a5a0c; --chart-2:#4d7a4f; --chart-3:#0072b2; --chart-4:#b0851b; --chart-5:#8f1d21; --chart-6:#5b5f66;
+  --shadow:none; --shadow-lg:none;
+  --skeleton-base:#e2e4de; --skeleton-shine:#cfd2cc;
+}
+
+/* ---------- standing rule: square, flat ---------- */
+*,*::before,*::after{border-radius:0 !important;box-shadow:none !important}
+.connect-wrap{background:var(--bg)}
+.map-legend-bar,.sk{background-image:none}
+
+/* ---------- base type ---------- */
+html{font-size:16px}
+@media (min-width:700px){html{font-size:17px}}
+@media (min-width:1100px){html{font-size:18px}}
+body{font:400 1rem/1.55 var(--serif);font-optical-sizing:auto;text-rendering:optimizeLegibility}
+::selection{background:var(--accent-dim)}
+a{color:inherit;text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:1px;text-underline-offset:.18em}
+a:hover{color:inherit;text-decoration-thickness:2px}
+.container{padding-left:clamp(1.25rem,4vw,3rem);padding-right:clamp(1.25rem,4vw,3rem)}
+
+/* Karla: labels, controls, titles, captions, figures */
+button,input,select,
+.topbar-title,.topbar-site,.card-title,.card-subtitle,.kpi-label,.kpi-sub,.kpi-trend,
+.field-label,.freshness,.legend-row,.map-legend,.map-tooltip,.ref-panel-title,
+.or-divider,.demo-banner,.demo-subtitle,.help-box,.footer,.show-more,.retry-btn,
+.card-error-row,.empty-state,.recharts-wrapper,.recharts-default-tooltip,.menu{font-family:var(--sans)}
+.kpi-value,.kpi-value.string,.row-value,.row-pct,.legend-num,.map-tooltip .tt-stats,
+[style*="JetBrains Mono"]{font-family:var(--sans) !important}
+.kpi-value,.row-value,.row-pct,.legend-num,.tt-stats,.freshness,.ref-list,.recharts-text,
+[style*="JetBrains Mono"]{font-variant-numeric:tabular-nums lining-nums}
+.kpi-value{font-weight:600;letter-spacing:-.01em}
+.card-title{font-weight:600;font-size:.9rem;letter-spacing:.01em}
+.topbar-title{font-weight:600}
+.kpi-label{color:var(--text-muted)}
+
+/* ---------- cards become hairline sections ---------- */
+.card{background:transparent;border:0;border-top:1px solid var(--border);padding:1rem 0 0}
+.card-hover:hover{border-color:var(--border);transform:none}
+.grid{column-gap:2rem;row-gap:2.25rem}
+.kpi-trend{padding:0;background:transparent !important}
+.help-box{background:transparent;border-top:1px solid var(--border);padding:12px 0 0}
+.ref-panel{background:transparent;border-left:2px solid var(--accent);padding:4px 0 4px 12px}
+.error-banner{background:transparent;border:0;border-left:2px solid var(--danger);padding:6px 0 6px 12px}
+.demo-banner{background:transparent}
+.row-item.clickable{margin-left:0;margin-right:0;padding-left:0;padding-right:0}
+
+/* ---------- controls: square, 1px rule, paper; 44px targets ---------- */
+.btn-icon{width:44px;height:44px;background:var(--bg);border:1px solid var(--border);color:var(--text-secondary)}
+.btn-icon:hover{color:var(--text);border-color:var(--accent)}
+.seg{background:transparent;border:0;padding:0;gap:.25rem}
+.seg button{min-height:44px;padding:0 .6rem;color:var(--text-secondary);border-bottom:2px solid transparent}
+.seg button:hover{color:var(--text);border-bottom-color:var(--border)}
+.seg button.active{background:transparent;color:var(--text);border-bottom-color:var(--accent)}
+.btn,.btn-primary,.btn-demo,.retry-btn,.show-more{min-height:44px}
+.btn-primary{color:var(--bg)}
+.btn-primary:hover:not(:disabled),.btn-demo:hover:not(:disabled){transform:none}
+.btn-demo{background:transparent}
+.retry-btn{background:transparent}
+.retry-btn:hover,.show-more:hover,.menu button:hover,.row-item.clickable:hover{background:var(--accent-dim)}
+input,select{background:var(--bg);border:1px solid var(--border)}
+input:focus,select:focus{border-color:var(--accent)}
+
+/* menu popover, tooltips: paper, 1px rule, square, no shadow */
+.menu,.map-tooltip,.recharts-default-tooltip{background:var(--bg) !important;border:1px solid var(--border) !important}
+.recharts-default-tooltip{border-radius:0 !important}
+
+/* ---------- charts and map ---------- */
+.recharts-area-area{fill:var(--accent-dim);fill-opacity:1}
+.world-map path{fill:var(--rule-soft);stroke:var(--paper)}
+.world-map path[data-has="1"]{fill:var(--accent)}
+.map-legend-bar{position:relative;background:color-mix(in srgb,var(--accent) 20%,transparent)}
+.map-legend-bar::before,.map-legend-bar::after{content:"";position:absolute;top:0;bottom:0;right:0}
+.map-legend-bar::before{width:66%;background:color-mix(in srgb,var(--accent) 55%,transparent)}
+.map-legend-bar::after{width:33%;background:var(--accent)}
+
+/* ---------- skeleton: flat rule-soft block, gentle pulse to rule ---------- */
+.sk{background-color:var(--skeleton-base);animation:ed-pulse 1.4s ease-in-out infinite}
+@keyframes ed-pulse{50%{background-color:var(--skeleton-shine)}}
+
+/* ---------- accessibility ---------- */
+:focus-visible,
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important;scroll-behavior:auto !important}
+  .sk{background-color:var(--skeleton-base)}
+}
