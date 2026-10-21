@@ -813,11 +813,14 @@
       gap: 6px;
       flex-wrap: wrap;
     }
-    .custom-range input[type="date"] {
+    .custom-range input {
+      width: 12.5ch;
       padding: 6px 8px;
+      font-variant-numeric: tabular-nums;
       font-size: 0.82rem;
       border-radius: 6px;
     }
+    .custom-range input[aria-invalid="true"] { border-color: var(--danger); }
     .custom-range .sep { color: var(--text-muted); font-size: 0.82rem; }
 
     /* ====== UTIL ====== */
@@ -879,6 +882,9 @@
       return sign + n.toFixed(1) + '%';
     }
 
+    const ALL_TIME_START = '2026-03-01';
+    const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
     function getDateRange(preset, customStart, customEnd) {
       const end = new Date();
       end.setMinutes(0, 0, 0);
@@ -898,6 +904,11 @@
           break;
         case '90d':
           start.setDate(start.getDate() - 90);
+          break;
+        case 'all':
+          // GoatCounter returns one row per day of the range, so start at
+          // the first month with data instead of an arbitrary epoch.
+          start.setTime(new Date(ALL_TIME_START + 'T00:00:00').getTime());
           break;
         case 'custom':
           if (customStart && customEnd) {
@@ -954,7 +965,7 @@
       // Construct from local components so the displayed day matches the
       // site's bucket regardless of the browser's timezone.
       const d = new Date(+m[1], +m[2] - 1, +m[3]);
-      return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      return d.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
     }
 
     // Country name → flag emoji. Falls back to 🌐 for unmapped names.
@@ -2429,6 +2440,30 @@
       );
     });
 
+    // Native <input type="date"> renders in the browser locale (often
+    // mm/dd/yyyy), so take ISO yyyy-mm-dd as text and commit only valid dates.
+    function DateField({ value, onChange, label }) {
+      const [draft, setDraft] = useState(value);
+      useEffect(() => setDraft(value), [value]);
+      const valid = (v) => ISO_DATE.test(v) && !isNaN(new Date(v + 'T00:00:00'));
+      return (
+        <input
+          type="text"
+          inputMode="numeric"
+          placeholder="yyyy-mm-dd"
+          maxLength={10}
+          value={draft}
+          aria-label={label + ' (yyyy-mm-dd)'}
+          aria-invalid={draft !== '' && !valid(draft)}
+          onChange={(e) => {
+            const v = e.target.value;
+            setDraft(v);
+            if (valid(v)) onChange(v);
+          }}
+        />
+      );
+    }
+
     // ============================================================
     // DASHBOARD
     // ============================================================
@@ -2574,7 +2609,9 @@
           if (cancelledRef.current) return;
           setLastUpdatedAt(Date.now());
 
-          // Previous-period total for trend (best-effort, doesn't block UI)
+          // Previous-period total for trend (best-effort, doesn't block UI).
+          // All time has no previous period.
+          if (preset === 'all') return;
           setProgress(p => ({ ...p, fired: p.fired + 1 }));
           try {
             const prev = getPreviousRange(start, end);
@@ -2590,7 +2627,7 @@
           }
         })();
         return () => { cancelledRef.current = true; };
-      }, [demoMode, client, start, end, refreshTick, runTier, warmUp]);
+      }, [demoMode, client, start, end, preset, refreshTick, runTier, warmUp]);
 
       // Tier 2: donut row (browsers / OS / devices). Lazy.
       const [donutRowRef, donutInView] = useInView();
@@ -2718,7 +2755,7 @@
         return { name: top.path, count: top.count };
       }, [data]);
 
-      const presetLabel = (p) => p === '7d' ? 'last 7 days' : p === '30d' ? 'last 30 days' : p === '90d' ? 'last 90 days' : p === 'today' ? 'today' : 'selected range';
+      const presetLabel = (p) => p === '7d' ? 'last 7 days' : p === '30d' ? 'last 30 days' : p === '90d' ? 'last 90 days' : p === 'all' ? 'all time' : p === 'today' ? 'today' : 'selected range';
 
       return (
         <>
@@ -2750,6 +2787,7 @@
                   ['7d','7d'],
                   ['30d','30d'],
                   ['90d','90d'],
+                  ['all','All'],
                   ['custom','Custom'],
                 ].map(([val,label]) => (
                   <button
@@ -2764,21 +2802,9 @@
 
               {preset === 'custom' && (
                 <div className="custom-range">
-                  <input
-                    type="date"
-                    value={customStart}
-                    onChange={(e) => setCustomStart(e.target.value)}
-                    aria-label="Start date"
-                    max={customEnd || undefined}
-                  />
+                  <DateField value={customStart} onChange={setCustomStart} label="Start date" />
                   <span className="sep">→</span>
-                  <input
-                    type="date"
-                    value={customEnd}
-                    onChange={(e) => setCustomEnd(e.target.value)}
-                    aria-label="End date"
-                    min={customStart || undefined}
-                  />
+                  <DateField value={customEnd} onChange={setCustomEnd} label="End date" />
                 </div>
               )}
 
@@ -2863,7 +2889,7 @@
                       label="Total visitors"
                       value={failed('total') ? '—' : fmtNum(totalNum)}
                       trend={failed('total') ? null : trend}
-                      sub={`vs previous ${presetLabel(preset)}`}
+                      sub={preset === 'all' ? 'all time' : `vs previous ${presetLabel(preset)}`}
                     />
                   ) : <SkeletonKPI />}
                   {ready('hits') || failed('hits') ? (
