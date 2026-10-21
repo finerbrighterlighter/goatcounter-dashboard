@@ -18,7 +18,7 @@ An open-source alternative dashboard for [GoatCounter](https://www.goatcounter.c
 - **Choropleth world map:** countries shaded by visitor count (square-root scale so small markets stay visible), with hover tooltips and a gradient legend.
 - **Demo mode:** one click on the connect screen loads the full dashboard with realistic sample data. No API key, no account, no setup. Useful for trying before connecting and for sharing on social/forums.
 - **Dark and light mode:** defaults to your system preference, toggle persisted across sessions.
-- **Flexible date ranges:** Today, 7d, 30d, 90d, or a custom range.
+- **Flexible date ranges:** Today, 7d, 30d, 90d, All, or a custom range (yyyy-mm-dd).
 - **Period-over-period trends:** every KPI card compares against the previous equivalent window.
 - **Drill-down everywhere:** click any page for its referrers, any browser/OS/device for version details, any country for region breakdown, or any campaign for referrer URLs. World map highlights the selected country.
 - **Smart loading:** KPIs and the traffic chart load first; donut, geo, and campaign breakdowns lazy-fetch only when you scroll to them.
@@ -123,7 +123,7 @@ Working today:
 - Drill-down on every card: pages (referrers), browsers/OS/devices (versions), countries (regions), campaigns (referrer URLs)
 - Choropleth world map with hover tooltips (sqrt color scale)
 - Dark / light theme with system-preference default
-- Today / 7d / 30d / 90d / Custom date ranges
+- Today / 7d / 30d / 90d / All / Custom date ranges
 - Strict-sequential rate-limited request queue
 - 60-second `localStorage` response cache
 - Lazy-loaded breakdowns via `IntersectionObserver`
