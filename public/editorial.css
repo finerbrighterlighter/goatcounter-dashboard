@@ -26,15 +26,15 @@
   --skeleton-base:#262a2e; --skeleton-shine:#34373c;
 }
 :root[data-theme="light"]{
-  --paper:#f3f3ef; --ink:#1b1d20; --mute:#5b5f66; --rule:#cfd2cc; --rule-soft:#e2e4de;
-  --bg:#f3f3ef; --bg-surface:#f3f3ef; --bg-surface-2:#f3f3ef;
-  --border:#cfd2cc;
+  --paper:#f2f3f5; --ink:#1b1d20; --mute:#5b5f66; --rule:#cfd2d6; --rule-soft:#e3e5e8;
+  --bg:#f2f3f5; --bg-surface:#f2f3f5; --bg-surface-2:#f2f3f5;
+  --border:#cfd2d6;
   --text:#1b1d20; --text-secondary:#5b5f66; --text-muted:#5b5f66;
-  --accent:#8a5a0c; --accent-hover:#8a5a0c; --accent-dim:#f1e7cd;
+  --accent:#8a5a0c; --accent-hover:#8a5a0c; --accent-dim:#e3ded4;
   --success:#4d7a4f; --danger:#8f1d21;
   --chart-1:#8a5a0c; --chart-2:#4d7a4f; --chart-3:#0072b2; --chart-4:#9e4a7a; --chart-5:#8f1d21; --chart-6:#5b5f66;
   --shadow:none; --shadow-lg:none;
-  --skeleton-base:#e2e4de; --skeleton-shine:#cfd2cc;
+  --skeleton-base:#e3e5e8; --skeleton-shine:#cfd2d6;
 }
 
 /* ---------- standing rule: square, flat ---------- */
